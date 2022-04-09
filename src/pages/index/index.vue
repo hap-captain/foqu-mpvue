@@ -123,10 +123,15 @@
     },
     created() {
       let that = this;
-      this.getCurrentWeek();
       this.checkTip();
-      this.getUserClass();
-      this.getCourse("19网络工程")
+      // console.log("用户班级===>", this.getUserClass())
+      that.getTodayCourse()
+
+
+      // this.getUserClass();
+      //this.getCourse("19网络工程");
+      that.getTodayCourse()
+      that
       // that.getUserClass().then(res => {
       //     that.myClass = res;
       //   getTodayCourse(res).then(res => {
@@ -147,7 +152,6 @@
 
 
       // })
-      console.log('执行了created')
     },
 
     //用户点击右上角分享朋友圈
@@ -189,7 +193,7 @@
       }
     },
     methods: {
-      checkTip(){
+    checkTip(){
         if (wx.getStorageSync('tip')) {
           this.tip = wx.getStorageSync('tip')
         } else {
@@ -198,7 +202,7 @@
       },
 
       //获取当前学期的周数
-     getCurrentWeek() {
+    async getCurrentWeek() {
         let that = this;
         let date = new Date();
         let currentWeek = -1
@@ -208,112 +212,93 @@
           .get()
           .then(res => {
             let dateStart = new Date(res.data.dateStart);
-            that.currentWeek = Math.floor((date - dateStart) / (1000 * 60 * 60 * 24) / 7 + 1);
+            currentWeek = Math.floor((date - dateStart) / (1000 * 60 * 60 * 24) / 7 + 1);
+            console.log("当前周数",currentWeek)
+            return currentWeek;
           })
       },
 
-      getCourseStorage(courseKey) {
-        let coursesList = [];
-       wx.getStorage({
-          key: courseKey
-        }).then(res => {
-          coursesList = res.data;
-        }).catch(err => {})
-        return {
-          coursesList
-        }
-      },
 
-     getCourse(myClass) {
-       //获取缓存数据
-        let coursesList = this.getCourseStorage(myClass);
-        if(coursesList.length == 0)
-        {
-            wx.cloud.callFunction({
-              name: 'getCourse',
-              data: {
-                myClass,
-              }
-            }).then(res => {
-              coursesList = res.result.data;
-              wx.setStorage({
-                key: myClass,
-                data: coursesList,
-                success: res => {},
-                fail: err => {},
-              })
-            })
-        }
-        return coursesList;
-      },
 
-      checkWeek(weeks, beginWeek, endWeek) {
-        for (let i = 0; i < weeks.length; i++) {
-          if (weeks[i] >= beginWeek && weeks[i] <= endWeek) {
-            return true;
+     async getCourse() {
+       console.log("值了")
+      let className = await this.getUserClass();
+      if(wx.getStorageSync(className)){
+        return wx.getStorageSync(className);
+      }
+      else{
+        wx.cloud.callFunction({
+          name: 'getCourse',
+          data: {
+            myClass:className
           }
-        }
-        return false;
-      },
+        }).then(res => {
+          wx.setStorage({
+            key: className,
+            data: res.result.data,
+          })
+          console.log("从云函数课程信息===>", res.result.data)
+          return res.result.data;
+        })
+      }
 
-      async getTodayCourse() {
+    },
+
+    async getTodayCourse() {
+        let that = this;
         let todayCourseList = []
         let status = true //用于提示查无班级
-        //获取当前周
+        //获取当前是周几
+          let day = new Date().getDay() === 7 ? 0 : new Date().getDay();
 
-        if (todayCourseList.length == 0 || todayCourseList[0].class != myClass) {
-          let day = today.getDay();
-          if (day == 0) {
-            day = 7; //修改为星期日
-          }
-          let coursesList = []; //当前所选学期课程数据
-          let dataObj = await getCourseStorage(myClass);
-          if (dataObj.coursesList.length == 0 ) { //缓存没有数据时
-            dataObj = await getCourse(myClass, currentWeek);
-          }
-
-          //获取到课表，进行处理
-          let RcoursesList = dataObj.coursesList
-          let todayCourse = [];
-          if (RcoursesList.length == 0) {
+          let allCourses = await that.getCourse();
+          let currentWeek = await that.getCurrentWeek();
+          console.log("yingaiihouz")
+          //没有课，做标记
+          if (allCourses.length == 0) {
             status = false;
           }
-          for (let n = 0; n < RcoursesList.length; n++) {
-            if (RcoursesList[n].day == day && checkWeek(RcoursesList[n].weeksNum, currentWeek,
-              currentWeek)) {
-              todayCourseList.push(RcoursesList[n]);
+          for (let n = 0; n < allCourses.length; n++) {
+            if (allCourses[n].day == day &&  allCourses[n].weeksNum.indexOf(currentWeek) != -1) {
+              todayCourseList.push(allCourses[n]);
             }
           }
-        }
-        return {
-          todayCourseList: todayCourseList,
-          status: status,
-          currentWeek: currentWeek
-        }
+          this.courseData = todayCourseList;
       },
 
       //正常执行 获取班级信息 18工业工程1 return => myClass
-     getUserClass() {
+    async getUserClass() {
         let that = this;
+        if(wx.getStorageSync("className")){
+          return wx.getStorageSync("className")
+        }
+        else{
          wx.cloud.callFunction({
             name: 'getUserInfo'
           })
           .then(res => {
             let info = res.result.info
             if (info && info.length > 0) {
-              that.myClass = info[0].myClass
+              wx.setStorage({
+                key: 'className',
+                data: info[0].myClass,
+              })
+              return info[0].myClass;
             }
-            console.log("班级信息",that.myClass);
+            else{
+              return undefined;
+            }
           })
+        }
       },
 
-      toMyInfo(e) {
+    toMyInfo(e) {
         wx.navigateTo({
           url: '/pages/my-info/my-info'
         })
       },
 
-      flushCoures() {
+    flushCoures() {
         wx.showLoading({
           title: '刷新中',
         })
@@ -321,7 +306,7 @@
         wx.hideLoading()
       },
 
-      loadCourse: function(flush) {
+    loadCourse: function(flush) {
         let that = this
         let tipStr = "今天没课，去看看完整课表吧"
         that.getUserClass().then(res => {
@@ -347,12 +332,12 @@
         })
       },
 
-      changTip() {
+    changTip() {
         this.tip = true;
         wx.setStorageSync('tip', true)
       }
 
-    }
+  }
   }
 </script>
 

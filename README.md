@@ -36,3 +36,9 @@ wx.cloud.init({
 "cloudfunctionRoot": "static/cloudfunctions/"
 ```
 + 在微信开发者工具中找到cloudfunctions文件，即可进行云函数创建部署。
+
+安装vue-router
+控制台输入
+```
+npm install vue-router@4
+```

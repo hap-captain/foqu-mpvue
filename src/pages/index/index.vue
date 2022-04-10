@@ -130,8 +130,7 @@
 
       // this.getUserClass();
       //this.getCourse("19网络工程");
-      that.getTodayCourse()
-      that
+
       // that.getUserClass().then(res => {
       //     that.myClass = res;
       //   getTodayCourse(res).then(res => {
@@ -201,33 +200,33 @@
         }
       },
 
-      //获取当前学期的周数
-    async getCurrentWeek() {
-        let that = this;
-        let date = new Date();
-        let currentWeek = -1
-        //在数据库获取学期开始时间
-       db.collection('system')
-          .doc('dateStartId123')
-          .get()
-          .then(res => {
-            let dateStart = new Date(res.data.dateStart);
-            currentWeek = Math.floor((date - dateStart) / (1000 * 60 * 60 * 24) / 7 + 1);
-            console.log("当前周数",currentWeek)
-            return currentWeek;
-          })
-      },
 
+  //获取当前学期的周数
+       async getCurrentWeek(){
+            let that = this;
+            let date = new Date();
+            let currentWeek = -1;
+
+              //在数据库获取学期开始时间
+           currentWeek = await db.collection('system')
+                 .doc('dateStartId123')
+                 .get()
+                 .then(res => {
+                   let dateStart = new Date(res.data.dateStart);
+                   currentWeek = Math.floor((date - dateStart) / (1000 * 60 * 60 * 24) / 7 + 1);
+                  return currentWeek;
+                 })
+            return currentWeek;
+          },
 
 
      async getCourse() {
-       console.log("值了")
-      let className = await this.getUserClass();
+      let className = await this.getUserClass();;
       if(wx.getStorageSync(className)){
-        return wx.getStorageSync(className);
+        return await wx.getStorageSync(className);
       }
       else{
-        wx.cloud.callFunction({
+        let Courses = await wx.cloud.callFunction({
           name: 'getCourse',
           data: {
             myClass:className
@@ -240,6 +239,7 @@
           console.log("从云函数课程信息===>", res.result.data)
           return res.result.data;
         })
+        return Courses;
       }
 
     },
@@ -250,30 +250,32 @@
         let status = true //用于提示查无班级
         //获取当前是周几
           let day = new Date().getDay() === 7 ? 0 : new Date().getDay();
-
+          console.time("start")
           let allCourses = await that.getCourse();
-          let currentWeek = await that.getCurrentWeek();
-          console.log("yingaiihouz")
-          //没有课，做标记
-          if (allCourses.length == 0) {
-            status = false;
-          }
-          for (let n = 0; n < allCourses.length; n++) {
-            if (allCourses[n].day == day &&  allCourses[n].weeksNum.indexOf(currentWeek) != -1) {
-              todayCourseList.push(allCourses[n]);
-            }
-          }
-          this.courseData = todayCourseList;
+          let currentWeek = await this.$getName();
+          console.log("后执行===>获取星期" ,currentWeek)
+          console.log("后执行===>获取课程" ,allCourses)
+          // console.timeEnd("start")
+          // //没有课，做标记
+          // if (allCourses.length == 0) {
+          //   status = false;
+          // }
+          // for (let n = 0; n < allCourses.length; n++) {
+          //   if (allCourses[n].day == day &&  allCourses[n].weeksNum.indexOf(currentWeek) != -1) {
+          //     todayCourseList.push(allCourses[n]);
+          //   }
+          // }
+          // this.courseData = todayCourseList;
       },
 
       //正常执行 获取班级信息 18工业工程1 return => myClass
     async getUserClass() {
         let that = this;
         if(wx.getStorageSync("className")){
-          return wx.getStorageSync("className")
+          return await wx.getStorageSync("className")
         }
         else{
-         wx.cloud.callFunction({
+        let className = await wx.cloud.callFunction({
             name: 'getUserInfo'
           })
           .then(res => {
@@ -289,6 +291,7 @@
               return undefined;
             }
           })
+          return className;
         }
       },
 

@@ -1,5 +1,10 @@
 <script>
 export default {
+  data(){
+    return{
+        weeek : "dfdfad"
+    }
+  },
   created () {
     // 调用API从本地缓存中获取数据
     /*
@@ -9,24 +14,30 @@ export default {
      * 百度：mpvue === swan, mpvuePlatform === 'swan'
      * 支付宝(蚂蚁)：mpvue === my, mpvuePlatform === 'my'
      */
+console.log("helllwow");
 
-    let logs
-    if (mpvuePlatform === 'my') {
-      logs = mpvue.getStorageSync({key: 'logs'}).data || []
-      logs.unshift(Date.now())
-      mpvue.setStorageSync({
-        key: 'logs',
-        data: logs
-      })
-    } else {
-      logs = mpvue.getStorageSync('logs') || []
-      logs.unshift(Date.now())
-      mpvue.setStorageSync('logs', logs)
-    }
-  },
-  log () {
-    console.log(`log at:${Date.now()}`)
-  }
+
+},
+ methods:{
+   //获取当前学期的周数
+      async getCurrentWeek(){
+           let that = this;
+           let date = new Date();
+           let currentWeek = -1;
+
+             //在数据库获取学期开始时间
+          currentWeek = await db.collection('system')
+                .doc('dateStartId123')
+                .get()
+                .then(res => {
+                  let dateStart = new Date(res.data.dateStart);
+                  currentWeek = Math.floor((date - dateStart) / (1000 * 60 * 60 * 24) / 7 + 1);
+                 return currentWeek;
+                })
+           return currentWeek;
+         },
+
+ }
 }
 </script>
 

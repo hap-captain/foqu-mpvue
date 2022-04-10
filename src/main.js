@@ -1,43 +1,58 @@
 import Vue from 'vue'
-import App from './App'
+import Apps from './App'
 
 Vue.config.productionTip = false
-App.mpType = 'app'
+Apps.mpType = 'app'
 
 //云开发环境配置
 wx.cloud.init({
   env: 'fosusquare-9gwq61i6a0c9d216',
   traceUser: true
-})
+});
+App({
+  onLaunch: function(options) {
+    //获取手机屏幕信息
+   var systemInfo =  wx.getSystemInfo({
+      success: e => {
+        let custom = wx.getMenuButtonBoundingClientRect();
+        let StatusBar = e.statusBarHeight;
+        let Custom = custom;
+        let CustomBar = custom.bottom + custom.top - e.statusBarHeight;
+        // 获取屏幕高度
+        let screenHeight = e.screenHeight
+        // 获取状态栏高度
+        let statusBarHeight = e.statusBarHeight
+        //通过操作系统 确定自定义导航栏高度
+        let navBarHeight = 0;
+        if (e.system.substring(0, 3) == "iOS") {
+           navBarHeight = 42
+        } else {
+          navBarHeight = 44
+        }
+        return{
+          StatusBar,
+          Custom,
+          CustomBar,
+          screenHeight,
+          statusBarHeight,
+          navBarHeight
+        }
+      }
+    })
+  },
+  onShow: function(options) {
+  },
+  onHide: function() {
+      console.log("onHide");
+      // Do something when hide.
 
-//全局变量
-this.globalData = {
-  myClass: "",
-  currentWeek: "",
-  allCourseData: {},
-  flushC: "",
-  dotNum: '0' //记录消息红点数目
-}
-
-//获取手机屏幕信息
-wx.getSystemInfo({
-  success: e => {
-    this.globalData.StatusBar = e.statusBarHeight;
-    let custom = wx.getMenuButtonBoundingClientRect();
-    this.globalData.Custom = custom;
-    this.globalData.CustomBar = custom.bottom + custom.top - e.statusBarHeight;
-    // 获取屏幕高度
-    this.screenHeight = e.screenHeight
-    // 获取状态栏高度
-    this.statusBarHeight = e.statusBarHeight
-    // 通过操作系统 确定自定义导航栏高度
-    if (e.system.substring(0, 3) == "iOS") {
-      this.navBarHeight = 42
-    } else {
-      this.navBarHeight = 44
-    }
+  },
+  onError: function(msg) {
+      console.log(msg)
   }
-})
+  })
 
-const app = new Vue(App)
+const app = new Vue(Apps)
 app.$mount()
+
+Vue.prototype.globalData = systemInfo

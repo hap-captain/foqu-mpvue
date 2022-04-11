@@ -11,7 +11,8 @@
         </div>
       </div>
 
-      <div style="position: absolute;top: 145px; width: 100%;height: auto;">
+      <div style="position: absolute;top: 270rpx; width: 100%;height: auto;">
+        <!-- 菜单 -->
         <div class="cu-list grid col-3 no-border">
           <menuItem title="空教室查询" imgSrc="emptyClass.png" jumpTo="testPage">
           </menuItem>
@@ -27,34 +28,33 @@
           </menuItem>
         </div>
 
-        <div class="courseBox  animation-scale-up">
-
+        <div class="courseBox ">
+          <!-- 课表头部 -->
           <div>
             <text class="ontTextTitle ">
               -<text class="head">今日课表</text>-
             </text>
-            <div class="allCourse animationBtnEn  ">
+            <div class="allCourse ">
               <navigator url="/pages/course/course">
-                <div> 完整课表</div>
+                 完整课表
               </navigator>
             </div>
           </div>
-
+          <!-- 课表提示 -->
           <div class='invite' v-if="!tip">
             <text class="cuIcon-roundclosefill lg text-gray tipText" @click="changTip"></text>
             点击查看本学期的课程安排
           </div>
 
           <div class="course-body ">
-            <div class="course-tip" v-if="!myClass&&showTip" @click="toMyInfo">您未绑定班级信息，点我绑定</div>
-            <div class="course-tip" v-else-if="courseData.length==0&&showTip">{{tipStr}}</div>
-
-
-
+          <!--  课程信息提示 -->
+            <div class="course-tip" v-if="!myClass" @click="toMyInfo()">您未绑定班级信息，点我绑定</div>
+            <div class="course-tip" v-else-if="courseData.length==0">{{tipStr}}</div>
             <div class="course-list" v-else>
               <div class="cu-timeline" v-for="(item,index) in courseData" :key="index">
-                <div class=" cu-tag bg-mauve light round text-center animationBtnEn" style="margin-left:20rpx">
-                  <text>{{item.place}}</text></div>
+                <div class=" cu-tag bg-mauve light round text-center animationCard" style="margin-left:20rpx">
+                  <text>{{item.place}}</text>
+                </div>
                 <div class="cu-item text-cyan animationCard">
                   <div class="card">
                     <div class="cu-capsule ">
@@ -63,13 +63,11 @@
                       <div class="cu-tag bg-cyan light  ">{{item.teacher}}</div>
                       <div class="cu-tag  bg-olive light box2">{{item.weeks}}</div>
                     </div>
-                    <div class="margin-top name">{{item.name}}
-                    </div>
+                    <div class="margin-top name">{{item.name}}</div>
                   </div>
                 </div>
               </div>
             </div>
-
           </div>
 
         </div>
@@ -83,20 +81,15 @@
 
   const app = getApp()
   const db = wx.cloud.database()
-  let todayCourseList = []
-  let todayWeek = new Date().getDay() == 0 ? 7 : new Date().getDay();
 
   export default {
     data() {
       return {
         CustomBar: app.globalData.CustomBar,
-        todayWeek: todayWeek,
-        showHeader: true,
-        showTip: false,
-        showApp: false,
-        tipStr: '今天没课，去看看完整课表吧',
+        todayWeek: new Date().getDay() == 0 ? 7 : new Date().getDay(),
+        tipStr: '来啦来啦....',
         currentWeek: '',
-        myClass: '无班级数据',
+        myClass: true,
         courseData: [],
         days: ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'],
         time: [
@@ -118,42 +111,17 @@
         tip: false
       }
     },
+
     components: {
       menuItem
     },
+
     created() {
       let that = this;
-      this.checkTip();
-      // console.log("用户班级===>", this.getUserClass())
-      that.getTodayCourse()
-
-
-      // this.getUserClass();
-      //this.getCourse("19网络工程");
-
-      // that.getUserClass().then(res => {
-      //     that.myClass = res;
-      //   getTodayCourse(res).then(res => {
-      //     if (!res.status) {
-      //       tipStr = '暂无您的班级课程数据'
-      //     }
-      //     let currentWeek = '第' + res.currentWeek + '周'
-      //     if (res.currentWeek > 19 || res.currentWeek < 1) {
-      //       tipStr = '放假中...'
-      //       currentWeek = ''
-      //     }
-      //       that.showTip = true;
-      //       that.courseData = res.todayCourseList;
-      //       that.tipStr = tipStr;
-      //       that.currentWeek = currentWeek;
-
-      //   })
-
-
-      // })
+      that.checkTip();
+      that.getTodayCourse();
     },
 
-    //用户点击右上角分享朋友圈
     onShareTimeline: function() {
       return {
         title: '',
@@ -163,6 +131,7 @@
         imageUrl: ''
       }
     },
+
     onShareAppMessage: function() {
       return {
         title: '快来看看《今日课表》吧',
@@ -170,15 +139,10 @@
       }
     },
 
-    onShow: function() {
-      if (app.globalData.flushC) {
-        this.flushCoures()
-        app.globalData.flushC = false
-      }
-    },
+    onShow: function() {},
+
     onPullDownRefresh: function() {
-      console.log("执行了pullDown")
-      this.loadCourse(true);
+      this.getTodayCourse()
       wx.stopPullDownRefresh({})
       wx.showToast({
         title: '已刷新',
@@ -188,11 +152,117 @@
 
     computed: {
       barHeight() {
-        return "top:" + (this.CustomBar - 40) + "px";
+        return "top:" + wx.getStorageSync("systemInfo").statusBarHeight + "px";
       }
     },
+
     methods: {
-    checkTip(){
+      //获取当前学期的周数
+      async getCurrentWeek() {
+        let that = this;
+        let date = new Date();
+        let currentWeek = -1;
+
+        //在数据库获取学期开始时间
+        currentWeek = await db.collection('system')
+          .doc('dateStartId123')
+          .get()
+          .then(res => {
+            let dateStart = new Date(res.data.dateStart);
+            currentWeek = Math.floor((date - dateStart) / (1000 * 60 * 60 * 24) / 7 + 1);
+            return currentWeek;
+          })
+        return currentWeek;
+      },
+
+      //获取用户班级名字
+      async getUserClass() {
+        let that = this;
+        if (wx.getStorageSync("className")) {
+          return await wx.getStorageSync("className")
+        } else {
+          let className = await wx.cloud.callFunction({
+              name: 'getUserInfo'
+            })
+            .then(res => {
+              let info = res.result.info
+              if (info && info.length > 0) {
+                wx.setStorage({
+                  key: 'className',
+                  data: info[0].myClass,
+                })
+                return info[0].myClass;
+              } else {
+                that.myClass = false;
+                return undefined;
+              }
+            })
+          return className;
+        }
+      },
+
+      //获取本学期课程
+      async getCourse() {
+        let className = await this.getUserClass();
+        if (wx.getStorageSync(className)) {
+          return await wx.getStorageSync(className);
+        } else {
+          let Courses = await wx.cloud.callFunction({
+            name: 'getCourse',
+            data: {
+              myClass: className
+            }
+          }).then(res => {
+            wx.setStorage({
+              key: className,
+              data: res.result.data,
+            })
+            return res.result.data;
+          })
+          return Courses;
+        }
+      },
+
+      //获取今日课程
+      async getTodayCourse() {
+        let that = this;
+        let todayCourseList = [];
+        //获取当前是周几
+        let day = new Date().getDay() === 7 ? 0 : new Date().getDay();
+        //获取课程和当前周数
+        let allCourses = await that.getCourse();
+        let currentWeek = await that.getCurrentWeek();
+        //检查周数
+        if (currentWeek > 19 || currentWeek < 1) {
+          that.tipStr = '放假中...';
+          that.currentWeek = '';
+        } else {
+          that.currentWeek = '第 ' + currentWeek + ' 周';
+        }
+        //提示没有课程信息
+        if (allCourses.length == 0) {
+          that.tipStr = '暂无您的班级课程数据';
+        }
+        //获取当天课程信息
+        for (let n = 0; n < allCourses.length; n++) {
+          if (allCourses[n].day == day && allCourses[n].weeksNum.indexOf(currentWeek) != -1) {
+            todayCourseList.push(allCourses[n]);
+          }
+        }
+        if(todayCourseList.length == 0){
+          that.tipStr = "今天没课，去看看完整课表吧";
+        }
+        this.courseData = todayCourseList;
+      },
+
+      //改变提示状态
+      changTip() {
+        this.tip = true;
+        wx.setStorageSync('tip', true)
+      },
+
+      //检查提示状态
+      checkTip() {
         if (wx.getStorageSync('tip')) {
           this.tip = wx.getStorageSync('tip')
         } else {
@@ -200,147 +270,13 @@
         }
       },
 
-
-  //获取当前学期的周数
-       async getCurrentWeek(){
-            let that = this;
-            let date = new Date();
-            let currentWeek = -1;
-
-              //在数据库获取学期开始时间
-           currentWeek = await db.collection('system')
-                 .doc('dateStartId123')
-                 .get()
-                 .then(res => {
-                   let dateStart = new Date(res.data.dateStart);
-                   currentWeek = Math.floor((date - dateStart) / (1000 * 60 * 60 * 24) / 7 + 1);
-                  return currentWeek;
-                 })
-            return currentWeek;
-          },
-
-
-     async getCourse() {
-      let className = await this.getUserClass();;
-      if(wx.getStorageSync(className)){
-        return await wx.getStorageSync(className);
+      toMyInfo(){
+        console.log("dfjakdljf")
+         wx.navigateTo({
+            url: '/pages/testPage/main'
+        })
       }
-      else{
-        let Courses = await wx.cloud.callFunction({
-          name: 'getCourse',
-          data: {
-            myClass:className
-          }
-        }).then(res => {
-          wx.setStorage({
-            key: className,
-            data: res.result.data,
-          })
-          console.log("从云函数课程信息===>", res.result.data)
-          return res.result.data;
-        })
-        return Courses;
-      }
-
-    },
-
-    async getTodayCourse() {
-        let that = this;
-        let todayCourseList = []
-        let status = true //用于提示查无班级
-        //获取当前是周几
-          let day = new Date().getDay() === 7 ? 0 : new Date().getDay();
-          console.time("start")
-          let allCourses = await that.getCourse();
-          let currentWeek = await this.$getName();
-          console.log("后执行===>获取星期" ,currentWeek)
-          console.log("后执行===>获取课程" ,allCourses)
-          // console.timeEnd("start")
-          // //没有课，做标记
-          // if (allCourses.length == 0) {
-          //   status = false;
-          // }
-          // for (let n = 0; n < allCourses.length; n++) {
-          //   if (allCourses[n].day == day &&  allCourses[n].weeksNum.indexOf(currentWeek) != -1) {
-          //     todayCourseList.push(allCourses[n]);
-          //   }
-          // }
-          // this.courseData = todayCourseList;
-      },
-
-      //正常执行 获取班级信息 18工业工程1 return => myClass
-    async getUserClass() {
-        let that = this;
-        if(wx.getStorageSync("className")){
-          return await wx.getStorageSync("className")
-        }
-        else{
-        let className = await wx.cloud.callFunction({
-            name: 'getUserInfo'
-          })
-          .then(res => {
-            let info = res.result.info
-            if (info && info.length > 0) {
-              wx.setStorage({
-                key: 'className',
-                data: info[0].myClass,
-              })
-              return info[0].myClass;
-            }
-            else{
-              return undefined;
-            }
-          })
-          return className;
-        }
-      },
-
-    toMyInfo(e) {
-        wx.navigateTo({
-          url: '/pages/my-info/my-info'
-        })
-      },
-
-    flushCoures() {
-        wx.showLoading({
-          title: '刷新中',
-        })
-        this.loadCourse(true);
-        wx.hideLoading()
-      },
-
-    loadCourse: function(flush) {
-        let that = this
-        let tipStr = "今天没课，去看看完整课表吧"
-        that.getUserClass().then(res => {
-          that.setData({
-            myClass: res
-          })
-          getTodayCourse(res).then(res => {
-            if (!res.status) {
-              tipStr = '暂无您的班级课程数据'
-            }
-            let currentWeek = '第' + this.currentWeek + '周'
-
-            if (res.currentWeek > 19 || res.currentWeek < 1) {
-              tipStr = '放假中...'
-              currentWeek = ''
-            }
-
-              that.showTip = true;
-              that.courseData = res.todayCourseList;
-              that.tipStr = tipStr;
-              that.currentWeek = currentWeek;
-          })
-        })
-      },
-
-    changTip() {
-        this.tip = true;
-        wx.setStorageSync('tip', true)
-      }
-
-  }
+    }
   }
 </script>
 
@@ -357,12 +293,10 @@
   }
 
   .week {
-
     position: relative;
     width: 100%;
     height: 150rpx;
     float: left;
-
   }
 
   .weekType {
@@ -373,7 +307,6 @@
     font-size: 28rpx;
     color: grey;
   }
-
 
   .allCourse {
     box-shadow: 1px 1px 2px 0px #A9A9A9;
@@ -457,55 +390,6 @@
     font-weight: bold;
   }
 
-  .oneContent {
-    position: relative;
-    height: 118px;
-    width: 92%;
-    align-items: center;
-    margin: 28rpx 28rpx 0rpx 40rpx;
-    font-family: "SimSun";
-    line-height: 25px;
-    color: black;
-  }
-
-  .information {
-    position: absolute;
-    width: 100%;
-    height: 26px;
-    float: bottom;
-    bottom: 0px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: gray;
-    font-family: 'Courier New', Courier, monospace;
-
-  }
-
-  .oneFooter {
-    position: relative;
-    height: 31px;
-    width: 92%;
-    margin: 0px auto;
-    align-items: center;
-  }
-
-  .praiseAndComment {
-    position: relative;
-    top: 10px;
-    right: -14px;
-    margin-right: 30px;
-    font-size: 18px;
-  }
-
-  .numberType {
-    position: relative;
-    top: -2px;
-    font-size: 13px;
-    margin-left: 6px;
-  }
-
   .card {
     background-color: #f8f8ff;
     padding: 30rpx;
@@ -517,7 +401,6 @@
   }
 
   .box1 {
-
     border-radius: 20rpx 0 0 20rpx;
   }
 
@@ -529,11 +412,6 @@
 
     background-color: #f8f8ff;
   }
-
-  .animationRight {
-    animation: fadeInRight 2s 1;
-  }
-
   .animationLeft {
     animation: fadeInLeft 2s 1;
   }
@@ -543,7 +421,7 @@
   }
 
   .animationCard {
-    animation: zoomIn 1.5s 1;
+    animation: zoomIn 1.0s 1;
   }
 
   .invite {

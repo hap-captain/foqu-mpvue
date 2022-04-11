@@ -2,7 +2,10 @@
   "pages": [
     "pages/index/main",
     "pages/logs/main",
-    "pages/testPage/main"
+    "pages/testPage/main",
+    "pages/mine/main",
+    "pages/square/main",
+    "pages/message/main"
     ],
   "window": {
     "backgroundTextStyle": "light",
@@ -13,36 +16,36 @@
     "navigationBarTitleText": "",
     "navigationBarTextStyle": "black"
   },
-  "tabBar": {
-    "color": "#999",
-    "backgroundColor": "#fafafa",
-    "selectedColor": "#333",
-    "borderStyle": "white",
-
-    "list": [{
-      "text": "首页",
-      "pagePath": "pages/index/main",
-      "iconPath": "static/tabs/home.png",
-      "selectedIconPath": "static/tabs/home-active.png"
-    }, {
-      "text": "订单",
-      "pagePath": "pages/logs/main",
-      "iconPath": "static/tabs/orders.png",
-      "selectedIconPath": "static/tabs/orders-active.png"
-    }],
-
-    "items": [{
-      "name": "首页",
-      "pagePath": "pages/index/main",
-      "icon": "static/tabs/home.png",
-      "activeIcon": "static/tabs/home-active.png"
-    }, {
-      "name": "订单",
-      "pagePath": "pages/logs/main",
-      "icon": "static/tabs/orders.png",
-      "activeIcon": "static/tabs/orders-active.png"
-    }],
-    "position": "bottom",
-    "cloud": true
-  }
+   "cloud": true,
+    "tabBar": {
+      "borderStyle": "white",
+      "color": "#8a8a8a",
+      "selectedColor": "#0a95e6",
+      "list": [
+        {
+          "text": "应用",
+          "pagePath": "pages/index/main",
+          "iconPath": "static/tabs/appbefore.png",
+          "selectedIconPath": "static/tabs/app.png"
+        },
+        {
+          "text": "广场",
+          "pagePath": "pages/square/main",
+          "iconPath": "static/tabs/homebefor.png",
+          "selectedIconPath": "static/tabs/home.png"
+        },
+      {
+        "pagePath": "pages/message/main",
+        "text": "消息",
+        "iconPath": "static/tabs/messagebefore.png",
+        "selectedIconPath": "static/tabs/message.png"
+      },
+      {
+        "pagePath": "pages/mine/main",
+        "text": "我的",
+        "iconPath": "static/tabs/minebefor.png",
+        "selectedIconPath": "static/tabs/mine.png"
+      }
+      ]
+    }
 }

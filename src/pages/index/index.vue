@@ -139,7 +139,8 @@
       }
     },
 
-    onShow: function() {},
+    onShow: function() {
+    },
 
     onPullDownRefresh: function() {
       this.getTodayCourse()

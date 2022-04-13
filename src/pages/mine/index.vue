@@ -2,62 +2,44 @@
   <div id="">
 
     <div class="pageContainer">
-      <scroll-div scroll-y class="scrollPage">
-        <div class="UCenter-bg" :style="bgPic">
-          <image @click="inSetting" :src="avatarpic" class="png" mode="aspectFill"
-            style="height:75px;width:75px"></image>
-          <div @click="inSetting" class="text-xl">{{name}}
-          </div>
-          <div class="margin-top-sm">
-            <div class="cu-item signature">
-              <div class="content " @click="setSignature">
-                <text class="cuIcon-writefill text-olive"></text>
-                <text class="text-black signatureText ">{{signature}}</text>
-              </div>
+
+      <userInfoCard
+        :avatarpic="avatarpic"
+        :bgPic="picUrl"
+        :name="name"
+        :signature="signature"
+        @click="toSetting()"
+        >
+      </userInfoCard>
+      <div id="login-btn">
+        <button v-show="!ifLogin"  type="button" @click="toLogin()">点我注册</button>
+      </div>
+
+        <div class="padding flex">
+           <div class="select-text">
+             <text class="cuIcon-skinfill" :class="radioColor"></text>
+             <text class="title">四季随你</text>
             </div>
-          </div>
-
-          <!-- <button v-if="!ifLogin" class="cu-btn block bg-red margin-tb-sm lg loginBtn" @click="login">点击登陆</button> -->
-
-          <!-- <modal hidden="{{hiddenmodalput}}" title="设置个性签名({{signature.length}}/23)" confirm-text="完成" cancel-text="取消"
-            bindcancel="cancelM" bindconfirm="confirmM">
-            <input bindinput='iName' type='text' placeholder="请输入个性签名..." auto-focus />
-          </modal> -->
-
-         <image
-            src="https://786c-xly-3g3sm5xb43ed094b-1305336006.tcb.qcloud.la/system/wave.gif?sign=7c48c589f74b5e6c008edbc0bcf96c9d&t=1621865772"
-            mode="scaleToFill" class="gif-wave"></image>
+          <radio-group @change="radioChange($event)" >
+           <radio  v-for="(item,index) in items" :key="index" :class="item.color" class="radio margin-left-sm" :value="item.value" :checked="item.checked">
+            </radio>
+          </radio-group>
         </div>
 
-      <!--  <div class="padding flex text-center text-grey bg-white ">
-          <radio-group class="block" @click="radioChange">
-            <div class="cu-form-group">
-              <text class="cuIcon-skinfill text-{{iconColor}}"></text>
-              <div class="title">四季随你</div>
-              <div style="position:relative;float:right;" v-for="(item,index) in items" :key="index">
-                <radio class="{{item.color}} radio margin-left-sm" value="{{item.value}}" checked="{{item.checked}}">
-                </radio>
-              </div>
-            </div>
-          </radio-group>
-        </div> -->
-
-      </scroll-div>
-
-    <!--  <div class="cu-list grid col-3 padding ">
-        <div @click="inPage" class="cu-item" class=" shadow bg-white cu-item animation-reverse "   v-for="(item,index) in list" :key="index" data-index="{{index}}">
-          <div class="cuIcon-{{item.icon}} text-{{iconColor}} " style="font-size:32px">
+     <div class="cu-list grid col-3 padding ">
+        <div @click="inPage"class=" cu-item shadow bg-white cu-item animation-reverse "  v-for="(item,index) in list" :key="index" :data-index="index">
+          <div :class="menuItemCuIcon(item)" style="font-size:32px">
           </div>
           <text>item.title</text>
         </div>
-      </div> -->
+      </div>
     </div>
     <!-- <div class="cu-tabbar-height"></div> -->
   </div>
 </template>
 
 <script>
-
+  import userInfoCard from '@/components/userInfoCard'
   const app = getApp()
   const db = wx.cloud.database()
   var arrList = [];
@@ -65,10 +47,10 @@
   export default{
     data(){
       return{
-        signature:'',
+        signature:'342234234',
             avatarpic:'',
-            name:'',
-            ifLogin:app.ifLogin,
+            name:'dfdsf',
+            ifLogin:true,
             index: null,
             hiddenmodalput: true,
             showModal: true,
@@ -116,6 +98,7 @@
     },
 
     created() {
+      this.ifLogin = wx.getStorageSync('ifLogin')
        if(wx.getStorageSync('theme')&&wx.getStorageSync('picUrl'))
           {
 
@@ -160,107 +143,27 @@
       },
 
     components:{
-
+      userInfoCard
     },
     computed:{
-      bgPic(){
-        console.log('background-image:url(\'' + this.picUrl +'\');')
-        return 'background-image:url(\'' + this.picUrl +'\');';
-      }
+      radioColor(){
+        return "text-" + this.iconColor;
+      },
+       // text-{{iconColor}} "
     },
     methods:{
-       //文本内容合法性检测
-        async checkStr(text) {
-          try {
-            var res = await wx.cloud.callFunction({
-              name: 'checkStr',
-              data: {
-                text: text,
-              }
-            });
-            if (res.result.errCode == 0)
-              return true;
-          } catch (err) {
-            return false;
-          }
+        menuItemCuIcon(item){
+          console.log(item)
+          return 'cuIcon-' + item.icon;
         },
-
-         //开始审核文本
-         async checkText() {
-          var text = this.data.signature
-          if (text.length > 0) {
-            var checkOk = await this.checkStr(text);
-          } else {
-            var checkOk = true
-          }
-          if (!checkOk) {
-
-            wx.hideLoading({}),//审核不通过隐藏
-              wx.showToast({
-                title: '文本含有违法违规内容',
-                icon: 'none',
-                duration: 5000,
-              })
-            filePath = [];
-            arrList = [];
-
-            this.signature = '';
-            this.searchinput = '';
-            return false//这个return返回，停止继续执行
-          }
-          else {
-            return true
-          }
-        },
-        login(){
-          wx.navigateTo({
-            url: '../login/login',
-          })
-        },
-        //修改签名
-        setSignature: function () {
-
-          this.hiddenmodalput = false;
-
-        },
-        cancelM: function (e) {
-          this.hiddenmodalput = true;
-        },
-        async confirmM (e) {
-          wx.showLoading({
-            title: '上传中...',
-          })
-          var strOK = await this.checkText();
-          if(strOK)
-          {
-            //上传修改数据
-            db.collection('usersInfformation').where({
-              _openid:wx.getStorageSync('openid')
-            }).update({
-              data: {
-                signature:this.data.signature
-              }
-            }).then((res) => {
-
-              wx.setStorageSync('signature',this.data.signature)
-              wx.hideLoading({})
-              wx.showToast({
-                title: '已修改！',
-                duration: 500
-              })
-
-          });
-          }
-
-            this.hiddenmodalput = true;
-        },
-         iName (e) {
-          this.signature = e.detail.value
+        toLogin(){
+          console.log("进入注册页面")
         },
         radioChange(e) {
+          console.log(e.mp.detail)
           const items = this.items
           for (let i = 0, len = items.length; i < len; ++i) {
-            items[i].checked = items[i].value === e.detail.value
+            items[i].checked = items[i].value === e.mp.detail.value
             if(items[i].checked)
             {
                 this.picUrl = this.items[i].url;
@@ -271,16 +174,15 @@
 
           this.items = items;
 
-          wx.setStorageSync('theme', this.data.items)
-          wx.setStorageSync('picUrl', this.data.picUrl)
-          wx.setStorageSync('iconColor', this.data.iconColor)
+          wx.setStorageSync('theme', this.items)
+          wx.setStorageSync('picUrl', this.picUrl)
+          wx.setStorageSync('iconColor', this.iconColor)
         },
-        inSetting()
-        {
-          wx.navigateTo({
-            url: '../side/setting/setting',
-          })
-        },
+
+       toSetting()
+       {
+         console.log("进入设置")
+       },
         inPage(e)
         {
           var index=e.currentTarget.dataset.index
@@ -332,34 +234,7 @@
     background-color:white;
   }
 
-  .UCenter-bg {
-    background-size: cover;
-    height: 550rpx;
-    display: flex;
-    justify-content: center;
-    padding-top: 40rpx;
-    overflow: hidden;
-    position: relative;
-    flex-direction: column;
-    align-items: center;
-    color: #fff;
 
-  }
-
-  .UCenter-bg image {
-    width: 200rpx;
-    height: 200rpx;
-  }
-
-  .UCenter-bg .gif-wave{
-    position: absolute;
-    width: 100%;
-    bottom: 0;
-    left: 0;
-    z-index: 99;
-    mix-blend-mode: screen;
-    height: 100rpx;
-  }
 
   map,.mapBox{
     left: 0;
@@ -372,32 +247,11 @@
     width: 750rpx;
     height: 300rpx;
   }
-  .png
-  {
-    position: relative;
-    border-radius: 50%;
-    border: #e1e1ea 2px solid;
-  }
-  .text-xl {
-    color: black;
-    font-size: 36rpx;
-    margin-top: 4px;
-    font-weight: 500;
-  }
-  .signature
-  {
-    position: relative;
-    margin-left: 10px;
-    margin-right: 18px;
-  }
-  .cu-form-group .title {
-    text-align: justify;
-    margin-left: 5px;
+
+  .title {
     padding-right: 48rpx;
     font-size: 28rpx;
     position: relative;
-    height: 56rpx;
-    line-height: 58rpx;
     color: black;
   }
   .setting
@@ -427,4 +281,20 @@
     min-height: 100rpx;
     height: calc(100rpx + env(safe-area-inset-bottom) / 2);
   }
+  #login-btn{
+    position: absolute;
+    top: 430rpx;
+    height: auto;
+    width: 100%;
+    margin: 0 auto;
+    z-index: 100;
+  }
+  #login-btn button{
+    background-color: #f5ac3bf2;
+    width: 250rpx;
+  }
+  .select-text{
+    margin-left: 30rpx;
+  }
+
 </style>

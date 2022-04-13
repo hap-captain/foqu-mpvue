@@ -27,9 +27,7 @@
         });
       }
     },
-    newFunction() {
-      console.log("dfsd")
-    }
+  
   }
 </script>
 

@@ -81,7 +81,7 @@ App({
     }
     //版本迭代遗留问题，判断是否已经有注册记录
     if (!wx.getStorageSync('userInformation'))
-    { console.log("woengllll")
+    { 
       let userInfo = await wx.cloud.database().collection('usersInfformation')
         .where({
           _openid: openid
@@ -90,7 +90,7 @@ App({
         .then(res => {
           return res.data;
         })
-        console.log("userInfo", userInfo[0])
+
       if (userInfo.length == 0) { //如果用户不存在则缓存中不因存在userInformation，用于删除用户
         try {
           wx.removeStorage({
@@ -101,7 +101,7 @@ App({
           wx.setStorageSync('ifLogin', false);
         }
       } else {
-        wx.setStorageSync('userInformation', userInfo[0])
+        wx.setStorageSync('userInformation', userInfo[0].userinfo)
         wx.setStorageSync('ifLogin', true);
       }
 

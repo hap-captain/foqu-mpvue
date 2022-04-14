@@ -108,14 +108,14 @@
         wx.setStorageSync('signature', '个性签名')
       }
 
-      // if (wx.getStorageSync('userInformation')) {
-      //   this.avatarpic = wx.getStorageSync('userInformation').userinfo.avatarPic;
-      //   this.name = wx.getStorageSync('userInformation').userinfo.name;
-      // } else {
-      //   this.avatarpic =
-      //     'cloud://fosusquare-9gwq61i6a0c9d216.666f-fosusquare-9gwq61i6a0c9d216-1305659720/system/user.png';
-      //   this.name = '昵称'
-      // }
+      if (wx.getStorageSync('userInformation')) {
+        this.avatarpic = wx.getStorageSync('userInformation').avatarPic;
+        this.name = wx.getStorageSync('userInformation').name;
+      } else {
+        this.avatarpic =
+          'cloud://fosusquare-9gwq61i6a0c9d216.666f-fosusquare-9gwq61i6a0c9d216-1305659720/system/user.png';
+        this.name = '昵称'
+      }
     },
 
     onPullDownRefresh: function() {

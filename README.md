@@ -2,6 +2,8 @@
 
 > 一个基于mpvue和微信云开发的校园社交类小程序
 
+![小程序二维码](https://s3.bmp.ovh/imgs/2022/03/159d40f7fe6cba9d.jpg)
+
 ## 构建步骤
 使用mpvue-cli 初始化项目
 ``` bash

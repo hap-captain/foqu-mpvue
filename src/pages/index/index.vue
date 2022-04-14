@@ -290,7 +290,7 @@
   .container {
     background-color: #FFFFFF;
     width: auto;
-    min-height: 100vh;
+    
   }
 
   .week {
